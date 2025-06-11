@@ -90,11 +90,11 @@ Tells you if a file is:
 ```bash
 kudu diff <commit_hash>
 ```
- ```
+
 Outputs added and removed lines with color:
  * + (green) for additions
  * - (red) for deletions
-```
+
 
 ### checkout <commit-hash>
 #### Creates a safe copy of files from a commit into a new folder.
