@@ -129,7 +129,6 @@ export class Kudu {
 
     async status(dirpath){
         const filesInStagingArea = JSON.parse(await fs.readFile(this.indexPath));
-        // filesInStagingArea.map((item)=>console.log(item.path));
         const files = await fs.readdir(dirpath,{withFileTypes:true});
         const ignored = await this.getIgnoredFiles();
 
@@ -162,7 +161,6 @@ export class Kudu {
                 if(stagedFile){
                     const newFileContent = await fs.readFile(filePath,{encoding:'utf-8'});
                     const newFileHash = this.hash(newFileContent);
-                    // console.log(newFileHash);
                     if(newFileHash === stagedFile.file){
                         console.log(`${file.name} is Tracked And Staged`);
                     }
@@ -192,7 +190,6 @@ export class Kudu {
     async getParentCommitContent(files,filePath){
         const contains = files.find((item)=>item.path==filePath);
         if(contains){
-            // return contains;
             const fileContent = await this.getFileContent(contains.file);
             return fileContent;
         }
@@ -279,7 +276,8 @@ export class Kudu {
     }
     async checkout(commitHash){
         const files = await this.getFilesFromCommit(commitHash);
-        const checkoutPath = path.join(process.cwd(),'checkout');
+        const dirName = commitHash.slice(0,5);
+        const checkoutPath = path.join(process.cwd(),dirName);
         try{
         await fs.mkdir(checkoutPath,{recursive:true});
         }catch(e){
@@ -287,8 +285,7 @@ export class Kudu {
         }
 
         for(const file of files){
-            const newPath = path.join(process.cwd(),'checkout',file.path);
-            // console.log(newPath);
+            const newPath = path.join(process.cwd(),dirName,file.path);
             const content = await this.readFileFromPath(file.path);
 
             try{
@@ -299,10 +296,3 @@ export class Kudu {
         }
     }
 }
-
-// (
-//     async ()=>{
-//         const kudu = new Kudu();
-//         await kudu.checkout('f0def0c25d928afb6a9b08f0bdbb8f3697ce3428');
-//     }
-// )();

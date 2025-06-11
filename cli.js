@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Kudu } from "./git.js";
+import { Kudu } from "./kudu.js";
 import process from 'process';
 
 const kudu = new Kudu();
@@ -31,8 +31,8 @@ const [,, cmd,...args] = process.argv;
         case 'diff':
             await kudu.diff(args[0]);
             break;
-        case 'ignore':
-            console.log(await kudu.getIgnoredFiles());
+        case "checkout":
+            await kudu.checkout(args[0]);
             break;
         default:
             console.log("Unknow Command");
