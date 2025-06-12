@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import { diffLines } from 'diff';
 import chalk from 'chalk';
 
+import { compress,decompress } from './utils/zlibHelper.js';
+
 export class Kudu {
     constructor(repoPath='.'){
         this.repoPath = path.join(repoPath,'.kudu');
@@ -19,7 +21,7 @@ export class Kudu {
         try{
             await fs.writeFile(this.headPath,'',{flag:'wx'});
             await fs.writeFile(this.indexPath,JSON.stringify([]),{flag:'wx'});
-            console.log("Initialized an Empty Kudu Repository");
+            console.log(`Initialized an Empty Kudu Repository at ${this.repoPath}`);
         }
         catch(e){
             console.log("Repository Already Initialized");
@@ -36,7 +38,8 @@ export class Kudu {
 
         const HashedContentPath = path.join(this.objectsPath,hashed_content);
         try{
-            await fs.writeFile(HashedContentPath,content,{flag:'wx'});
+            const compressed = await compress(content);
+            await fs.writeFile(HashedContentPath,compressed,{flag:'wx'});
         }catch(e){
         }
 
@@ -90,7 +93,7 @@ export class Kudu {
             let currentCommitData = JSON.parse(await fs.readFile(path.join(this.objectsPath,currentCommit)));
             console.log(`\n=== Commit ${currentCommit} ===`);
             console.log(`Date: ${currentCommitData.dateTime}`);
-            console.log(`Message: ${currentCommitData.message}`);
+            console.log(`Message: ${currentCommitData.message}\n`);
             currentCommit = currentCommitData.parent;
         }
     }
@@ -98,6 +101,7 @@ export class Kudu {
     async addAllFiles(dirpath){
         const ignored = await this.getIgnoredFiles();
         const files = await fs.readdir(dirpath,{withFileTypes:true});
+        let addedFiles = 0;
 
         for(const file of files){
             const filepath = path.join(dirpath,file.name);
@@ -123,8 +127,11 @@ export class Kudu {
             }
             else if(file.isFile()){
                 await this.add(relativePath);
+                addedFiles++;
             }
         }
+
+        console.log(`${addedFiles} files added to the staging Area.`)
     }
 
     async status(dirpath){
@@ -254,7 +261,8 @@ export class Kudu {
         const relativePath = path.resolve(normpath.split('/').join(path.sep));
 
         try{
-            const fileContent = await fs.readFile(relativePath,{encoding:'utf-8'});
+            const fileContent = await fs.readFile(relativePath);
+            console.log(Buffer.isBuffer(fileContent));
             return fileContent;
         }catch(e){
             console.log(`Unable to read the fileContent ${e}`);
@@ -281,17 +289,19 @@ export class Kudu {
         try{
         await fs.mkdir(checkoutPath,{recursive:true});
         }catch(e){
-            console.log(e);
+            console.log(`Error Creating the Checkout Folder. Try running the command Again !`);
         }
 
         for(const file of files){
             const newPath = path.join(process.cwd(),dirName,file.path);
-            const content = await this.readFileFromPath(file.path);
+            const objectsContentPath = path.join(this.objectsPath,file.file);
+            const content = await this.readFileFromPath(objectsContentPath);
+            const decompressed = await decompress(content);
 
             try{
-                await this.writeFile(newPath,content);
+                await this.writeFile(newPath,decompressed);
             }catch(e){
-                console.log(`Error : ${e}`);
+                console.log(`Unable to write the Checkout Files : ${e.message}`);
             }
         }
     }
