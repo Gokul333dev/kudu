@@ -41,6 +41,7 @@ export class Kudu {
             const compressed = await compress(content);
             await fs.writeFile(HashedContentPath,compressed,{flag:'wx'});
         }catch(e){
+            console.log(`Compression or Writing Error for file ${file}: ${e.message}`);
         }
 
         const relativePath = path.relative(process.cwd(),file);
@@ -191,7 +192,8 @@ export class Kudu {
         return commitContent;
         }
         catch(e){
-            console.log("Encountered An Error!");
+            console.log(`Error reading commit ${commitHash}: ${e.message}`);
+            return null;
         }
     }
     async getParentCommitContent(files,filePath){
@@ -209,12 +211,16 @@ export class Kudu {
             return fileContent;
         }
         catch(e){
-            console.log(e);
+            console.log(`Error reading file object ${fileHash}: ${e.message}`);
         }
     }
 
     async diff(commitHash){
         const commitContent = await this.getCommitContent(commitHash);
+        if(!commitContent){
+            console.log(`Cannot diff: Commit ${commitHash} not found or corrupted.`);
+            return;
+        }
         const parentCommitContent = commitContent.parent ? await this.getCommitContent(commitContent.parent) : {files:[]};
         for(const file of commitContent.files){
             const fileContent = await this.getFileContent(file.file);
@@ -271,16 +277,23 @@ export class Kudu {
 
     async getFilesFromCommit(commitHash){
         const commitPath = path.join(this.objectsPath,commitHash);
-
-        const commitData = JSON.parse(await fs.readFile(commitPath,{encoding:'utf-8'}));
-
-        return commitData.files;
+        try{
+            const commitData = JSON.parse(await fs.readFile(commitPath,{encoding:'utf-8'}));
+            return commitData.files;
+        }catch(e){
+            console.log(`Error parsing commit data from ${commitHash}: ${e.message}`);
+            return [];
+        }
     }
 
     async writeFile(filePath,content){
-        const dir = path.dirname(filePath);
-        await fs.mkdir(dir,{recursive:true});
-        await fs.writeFile(filePath,content,'utf-8');
+        try{
+            const dir = path.dirname(filePath);
+            await fs.mkdir(dir,{recursive:true});
+            await fs.writeFile(filePath,content,'utf-8');
+        }catch(e){
+            console.log(`Error writing to file ${filePath}: ${e.message}`);
+        }
     }
     async checkout(commitHash){
         const files = await this.getFilesFromCommit(commitHash);
@@ -296,12 +309,17 @@ export class Kudu {
             const newPath = path.join(process.cwd(),dirName,file.path);
             const objectsContentPath = path.join(this.objectsPath,file.file);
             const content = await this.readFileFromPath(objectsContentPath);
-            const decompressed = await decompress(content);
-
+            
             try{
+                const decompressed = await decompress(content);
+
+                if(!decompressed){
+                    console.log(`Skipping ${file.path}: Decompressed content is empty or invalid.`);
+                    continue;
+                }
                 await this.writeFile(newPath,decompressed);
             }catch(e){
-                console.log(`Unable to write the Checkout Files : ${e.message}`);
+                console.log(`Decompression or Writing Error for file ${file.path}: ${e.message}`);
             }
         }
     }
