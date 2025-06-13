@@ -1,6 +1,6 @@
 {
   "name": "kudu-vcs",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A mini Git-style CLI tool for version control",
   "type": "module",
   "bin": {
