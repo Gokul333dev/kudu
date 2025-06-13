@@ -1,10 +1,10 @@
-# Kudu - A Tiny Git-Style Version Control System
+# 🌴 Kudu - A Tiny Git-Style Version Control System
 
 **Kudu** is a simple version control CLI tool built with Node.js that mimics the core functionalities of Git. This is a basic V1 version designed for learning and experimentation. It tracks file versions, supports staging, commits, viewing logs, and allows basic diffing and checkout.
 
 ---
 
-## Features  
+## 🎯 Features  
 
 | Command      | Description                                                  | Example                    |
 |--------------|--------------------------------------------------------------|----------------------------|
@@ -18,7 +18,7 @@
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Quick Test (Global Installation)
 **Note** : Make sure you have node installed in your system. If not , Please Install node from [here](https://nodejs.org/en/download).  
@@ -149,7 +149,7 @@ Example:
 
 containing the files from that commit.
 
-## .kuduignore
+## 📂 .kuduignore
 You can add a .kuduignore file in your root directory to exclude files/folders from being tracked, similar to .gitignore.
 
 Example:
@@ -159,7 +159,7 @@ node_modules/
 .env
 ```
 
-## Compression Format
+## 🔒 Compression Format
 Kudu uses a custom compression format based on zlib's deflate algorithm. All stored file contents are compressed before being saved to the .kudu/objects directory.
 
 - Each compressed file is prefixed with a 3-byte custom header: KZ1
@@ -168,7 +168,7 @@ Kudu uses a custom compression format based on zlib's deflate algorithm. All sto
 
 This lightweight scheme ensures efficient storage and fast retrieval, while keeping the system simple and easy to modify.
 
-## Notes
+## 📌 Notes
 - Kudu is built with learning in mind — great for understanding how Git works internally.
 - It's not designed for production use or performance scaling.
 - All objects and commits are stored under .kudu/objects/ using SHA-1 hashes.
