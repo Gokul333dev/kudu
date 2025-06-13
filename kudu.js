@@ -76,7 +76,9 @@ export class Kudu {
         const commitPath = path.join(this.objectsPath,commitHash);
         try{
             await fs.writeFile(commitPath,JSON.stringify(commitData),{flag:'wx'});
+            console.log(chalk.green(`✔ Commit successful: "${commitMessage}"`));
         }catch(e){
+            console.log(chalk.red(`❌ Error Creating Commit !`));
         }
         await fs.writeFile(this.headPath,commitHash);
         await fs.writeFile(this.indexPath,JSON.stringify([]));
@@ -101,36 +103,41 @@ export class Kudu {
 
     async addAllFiles(dirpath){
         const ignored = await this.getIgnoredFiles();
-        const files = await fs.readdir(dirpath,{withFileTypes:true});
         let addedFiles = 0;
-
-        for(const file of files){
-            const filepath = path.join(dirpath,file.name);
-            const relativePath = path.relative(process.cwd(),filepath);
-            const normPath = relativePath.replace(/\\/g,'/');
-
-            if(normPath === '.kudu' || normPath.includes('.kudu/')) continue;
+        
+        const traverse = async(dirpath)=> {
+            const files = await fs.readdir(dirpath,{withFileTypes:true});
             
-            let shouldIgnore = false;
-
-            for(const item of ignored){
-                if(this.matchPattern(normPath,item)){
-                    shouldIgnore = true;
-                    break;
+            for(const file of files){
+                const filepath = path.join(dirpath,file.name);
+                const relativePath = path.relative(process.cwd(),filepath);
+                const normPath = relativePath.replace(/\\/g,'/');
+    
+                if(normPath === '.kudu' || normPath.includes('.kudu/')) continue;
+                
+                let shouldIgnore = false;
+    
+                for(const item of ignored){
+                    if(this.matchPattern(normPath,item)){
+                        shouldIgnore = true;
+                        break;
+                    }
+                }
+    
+                if(shouldIgnore){
+                    continue;
+                }
+                if(file.isDirectory()){
+                    await traverse(filepath);
+                }
+                else if(file.isFile()){
+                    await this.add(relativePath);
+                    addedFiles++;
                 }
             }
-
-            if(shouldIgnore){
-                continue;
-            }
-            if(file.isDirectory()){
-                await this.addAllFiles(filepath);
-            }
-            else if(file.isFile()){
-                await this.add(relativePath);
-                addedFiles++;
-            }
         }
+
+        await traverse(dirpath);
 
         console.log(`${addedFiles} files added to the staging Area.`)
     }
@@ -268,7 +275,6 @@ export class Kudu {
 
         try{
             const fileContent = await fs.readFile(relativePath);
-            console.log(Buffer.isBuffer(fileContent));
             return fileContent;
         }catch(e){
             console.log(`Unable to read the fileContent ${e}`);
@@ -320,7 +326,10 @@ export class Kudu {
                 await this.writeFile(newPath,decompressed);
             }catch(e){
                 console.log(`Decompression or Writing Error for file ${file.path}: ${e.message}`);
+                return;
             }
         }
+        console.log(chalk.green(`✔ Successfully checked out commit files to folder: ${dirName}/`));
+        console.log(`You can find them at: ${checkoutPath}`);
     }
 }

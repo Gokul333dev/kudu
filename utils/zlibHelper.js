@@ -13,7 +13,6 @@ export async function compress(content) {
 
 export async function decompress(content){
     const header = content.slice(0,3).toString();
-    console.log(header);
     if(header==='KZ1'){
         try{
             const decompressed = await inflateAsync(content.slice(3));
