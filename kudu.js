@@ -234,7 +234,7 @@ export class Kudu {
             const decompressed_pfc = await decompress(parentContent);
             const decompressed_pfc_str = decompressed_pfc.toString('utf-8');
             if(decompressed_pfc_str !== undefined){
-                const diff = diffLines(decompressed_pfc_str,decompressed_fc_str);
+                const diff = diffLines(decompressed_pfc_str,decompressed_fc_str,{ ignoreWhitespace: true });
 
                 diff.forEach(element => {
                     if(element.removed){
