@@ -41,7 +41,6 @@ export class Kudu {
             const compressed = await compress(content);
             await fs.writeFile(HashedContentPath,compressed,{flag:'wx'});
         }catch(e){
-            console.log(`Compression or Writing Error for file ${file}: ${e.message}`);
         }
 
         const relativePath = path.relative(process.cwd(),file);
@@ -138,8 +137,6 @@ export class Kudu {
         }
 
         await traverse(dirpath);
-
-        console.log(`${addedFiles} files added to the staging Area.`)
     }
 
     async status(dirpath){
