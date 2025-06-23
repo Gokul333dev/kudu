@@ -26,4 +26,3 @@ export async function decompress(content){
         console.log("Unknown Compressed Header.Not a kz1 File.")
     }
 }
-

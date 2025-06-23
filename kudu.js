@@ -211,7 +211,7 @@ export class Kudu {
     async getFileContent(fileHash){
         const filePath = path.join(this.objectsPath,fileHash);
         try{
-            const fileContent = await fs.readFile(filePath,{encoding:'utf-8'});
+            const fileContent = await fs.readFile(filePath);
             return fileContent;
         }
         catch(e){
@@ -228,9 +228,13 @@ export class Kudu {
         const parentCommitContent = commitContent.parent ? await this.getCommitContent(commitContent.parent) : {files:[]};
         for(const file of commitContent.files){
             const fileContent = await this.getFileContent(file.file);
+            const decompressed_fc = await decompress(fileContent);
+            const decompressed_fc_str = decompressed_fc.toString('utf-8');
             const parentContent = await this.getParentCommitContent(parentCommitContent.files,file.path);
-            if(parentContent !== undefined){
-                const diff = diffLines(parentContent,fileContent);
+            const decompressed_pfc = await decompress(parentContent);
+            const decompressed_pfc_str = decompressed_pfc.toString('utf-8');
+            if(decompressed_pfc_str !== undefined){
+                const diff = diffLines(decompressed_pfc_str,decompressed_fc_str);
 
                 diff.forEach(element => {
                     if(element.removed){
